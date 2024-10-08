@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Anonymous Review System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+    #reviews div {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase Configuration -->
+  <script src="firebase-config.js"></script>
+  <!-- App Logic -->
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <h1>Anonymous Review System</h1>
+  
+  <!-- Authentication Section -->
+  <div id="auth-section">
+    <h2>Login</h2>
+    <form id="login-form">
+      <label for="login-email">Email:</label>
+      <input type="email" id="login-email" required>
+      
+      <label for="login-password">Password:</label>
+      <input type="password" id="login-password" required>
+      
+      <button type="submit">Login</button>
+    </form>
+    
+    <h2>Sign Up</h2>
+    <form id="signup-form">
+      <label for="signup-email">Email:</label>
+      <input type="email" id="signup-email" required>
+      
+      <label for="signup-password">Password:</label>
+      <input type="password" id="signup-password" required>
+      
+      <button type="submit">Sign Up</button>
+    </form>
+    
+    <p id="auth-error" class="error"></p>
+  </div>
+  
+  <!-- Review Submission Section -->
+  <div id="review-section" class="hidden">
+    <h2>Submit a Review</h2>
+    <form id="review-form">
+      <label for="reviewed-person">Select Person to Review:</label>
+      <select id="reviewed-person" required>
+        <option value="">--Select--</option>
+        <!-- Options will be populated dynamically -->
+      </select>
+      
+      <label for="smiling">Smiling (1-5):</label>
+      <input type="number" id="smiling" name="smiling" min="1" max="5" required>
+      
+      <label for="intelligent">Intelligent (1-5):</label>
+      <input type="number" id="intelligent" name="intelligent" min="1" max="5" required>
+      
+      <label for="confident">Confident (1-5):</label>
+      <input type="number" id="confident" name="confident" min="1" max="5" required>
+      
+      <label for="optimist">Optimist (1-5):</label>
+      <input type="number" id="optimist" name="optimist" min="1" max="5" required>
+      
+      <label for="short-tempered">Short Tempered (1-5):</label>
+      <input type="number" id="short-tempered" name="short-tempered" min="1" max="5" required>
+      
+      <label for="egoist">Egoist (1-5):</label>
+      <input type="number" id="egoist" name="egoist" min="1" max="5" required>
+      
+      <label for="comment">Comment:</label>
+      <textarea id="comment" name="comment" required></textarea>
+      
+      <button type="submit">Submit Review</button>
+    </form>
+    
+    <button id="logout-button">Logout</button>
+    
+    <p id="review-success" class="success"></p>
+    <p id="review-error" class="error"></p>
+  </div>
+  
+  <!-- Reviews Display Section -->
+  <div id="reviews-section" class="hidden">
+    <h2>Your Reviews</h2>
+    <div id="reviews">
+      <!-- Reviews will be populated dynamically -->
+    </div>
+  </div>
+</body>
+</html>
