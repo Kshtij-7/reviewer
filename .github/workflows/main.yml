@@ -17,6 +17,10 @@ jobs:
         with:
           node-version: '16'  # Set the Node.js version
 
+
+      - name: Build project
+        run: npm run build
+
       - name: Deploy to Firebase
         env:
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
@@ -29,3 +33,4 @@ jobs:
         run: |
           echo "Deploying to Firebase..."
           # Run your Firebase deploy command here using the secrets
+          firebase deploy --token ${{ secrets.FIREBASE_API_KEY }}
