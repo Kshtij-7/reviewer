@@ -29,4 +29,3 @@ jobs:
         run: |
           echo "Deploying to Firebase..."
           # Run your Firebase deploy command here using the secrets
-          firebase deploy --token ${{ secrets.FIREBASE_API_KEY }}
