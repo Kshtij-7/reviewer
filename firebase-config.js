@@ -1,12 +1,12 @@
 const firebaseConfig = {
-    apiKey: "AIzaSyAPgMAC-k2lKo46OAdqKPDFdCMxkHsakok",
-    authDomain: "reviewer-3e104.firebaseapp.com",
-    projectId: "reviewer-3e104",
-    storageBucket: "reviewer-3e104.appspot.com",
-    messagingSenderId: "199147480723",
-    appId: "1:199147480723:web:887d9014a8f2ec197b0f66",
-    measurementId: "G-DGQ623776S"
-  };
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
+};
 
 firebase.initializeApp(firebaseConfig);
 
