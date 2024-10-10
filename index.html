@@ -34,6 +34,22 @@
       padding: 10px;
       margin-bottom: 10px;
     }
+    .qualities-list {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .qualities-list label {
+      width: 45%;
+      margin-right: 5%;
+      margin-bottom: 5px;
+    }
+    /* New Styles for Password Reset */
+    #password-reset-section {
+      margin-top: 20px;
+    }
+    #password-reset-section h2 {
+      margin-bottom: 10px;
+    }
   </style>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -60,6 +76,25 @@
       <button type="submit">Login</button>
     </form>
     
+    <!-- Forgot Password Link -->
+    <p><a href="#" id="forgot-password-link">Forgot Password?</a></p>
+    
+    <!-- Password Reset Form (Initially Hidden) -->
+    <div id="password-reset-section" class="hidden">
+      <h2>Reset Password</h2>
+      <form id="password-reset-form">
+        <label for="reset-email">Enter your email address:</label>
+        <input type="email" id="reset-email" required>
+        
+        <button type="submit">Send Password Reset Email</button>
+      </form>
+      <p id="reset-error" class="error"></p>
+      <p id="reset-success" class="success"></p>
+      
+      <!-- Back to Login Link -->
+      <p><a href="#" id="back-to-login-link">Back to Login</a></p>
+    </div>
+    
     <h2>Sign Up</h2>
     <form id="signup-form">
       <label for="signup-email">Email:</label>
@@ -74,6 +109,18 @@
     <p id="auth-error" class="error"></p>
   </div>
   
+  <!-- Email Verification Notice -->
+  <div id="verify-email-section" class="hidden">
+    <h2>Verify Your Email</h2>
+    <p>A verification email has been sent to your email address. Please verify your email to continue.</p>
+    <button id="resend-verification">Resend Verification Email</button>
+    <button id="logout-button-verify">Logout</button>
+    <p id="verify-error" class="error"></p>
+    <p id="verify-success" class="success"></p>
+    <!-- Optional: Refresh Verification Status -->
+    <button id="check-verification">I've Verified My Email</button>
+  </div>
+  
   <!-- Review Submission Section -->
   <div id="review-section" class="hidden">
     <h2>Submit a Review</h2>
@@ -84,30 +131,43 @@
         <!-- Options will be populated dynamically -->
       </select>
       
-      <label for="smiling">Smiling (1-5):</label>
-      <input type="number" id="smiling" name="smiling" min="1" max="5" required>
-      
-      <label for="intelligent">Intelligent (1-5):</label>
-      <input type="number" id="intelligent" name="intelligent" min="1" max="5" required>
-      
-      <label for="confident">Confident (1-5):</label>
-      <input type="number" id="confident" name="confident" min="1" max="5" required>
-      
-      <label for="optimist">Optimist (1-5):</label>
-      <input type="number" id="optimist" name="optimist" min="1" max="5" required>
-      
-      <label for="short-tempered">Short Tempered (1-5):</label>
-      <input type="number" id="short-tempered" name="short-tempered" min="1" max="5" required>
-      
-      <label for="egoist">Egoist (1-5):</label>
-      <input type="number" id="egoist" name="egoist" min="1" max="5" required>
+      <label>Qualities:</label>
+      <div class="qualities-list">
+        <label><input type="checkbox" name="qualities" value="Able"> Able</label>
+        <label><input type="checkbox" name="qualities" value="Adaptable"> Adaptable</label>
+        <label><input type="checkbox" name="qualities" value="Arrogant"> Arrogant</label>
+        <label><input type="checkbox" name="qualities" value="Brave"> Brave</label>
+        <label><input type="checkbox" name="qualities" value="Calm"> Calm</label>
+        <label><input type="checkbox" name="qualities" value="Caring"> Caring</label>
+        <label><input type="checkbox" name="qualities" value="Cheerful"> Cheerful</label>
+        <label><input type="checkbox" name="qualities" value="Confident"> Confident</label>
+        <label><input type="checkbox" name="qualities" value="Defensive"> Defensive</label>
+        <label><input type="checkbox" name="qualities" value="Dependable"> Dependable</label>
+        <label><input type="checkbox" name="qualities" value="Distrustful"> Distrustful</label>
+        <label><input type="checkbox" name="qualities" value="Energetic"> Energetic</label>
+        <label><input type="checkbox" name="qualities" value="Impatient"> Impatient</label>
+        <label><input type="checkbox" name="qualities" value="Insecure"> Insecure</label>
+        <label><input type="checkbox" name="qualities" value="Judgmental"> Judgmental</label>
+        <label><input type="checkbox" name="qualities" value="Logical"> Logical</label>
+        <label><input type="checkbox" name="qualities" value="Mature"> Mature</label>
+        <label><input type="checkbox" name="qualities" value="Moody"> Moody</label>
+        <label><input type="checkbox" name="qualities" value="Observant"> Observant</label>
+        <label><input type="checkbox" name="qualities" value="Organized"> Organized</label>
+        <label><input type="checkbox" name="qualities" value="Pessimistic"> Pessimistic</label>
+        <label><input type="checkbox" name="qualities" value="Rigid"> Rigid</label>
+        <label><input type="checkbox" name="qualities" value="Secretive"> Secretive</label>
+        <label><input type="checkbox" name="qualities" value="Self-centered"> Self-centered</label>
+        <label><input type="checkbox" name="qualities" value="Stubborn"> Stubborn</label>
+        <label><input type="checkbox" name="qualities" value="Supportive"> Supportive</label>
+        <label><input type="checkbox" name="qualities" value="Unapproachable"> Unapproachable</label>
+      </div>
       
       <label for="comment">Comment:</label>
       <textarea id="comment" name="comment" required></textarea>
       
       <button type="submit">Submit Review</button>
     </form>
-    
+    <a href="profile.html">My Profile</a>
     <button id="logout-button">Logout</button>
     
     <p id="review-success" class="success"></p>

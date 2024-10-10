@@ -6,6 +6,14 @@ const loginForm = document.getElementById('login-form');
 const signupForm = document.getElementById('signup-form');
 const authError = document.getElementById('auth-error');
 
+const verifyEmailSection = document.getElementById('verify-email-section');
+const resendVerificationButton = document.getElementById('resend-verification');
+const logoutButtonVerify = document.getElementById('logout-button-verify');
+const verifyError = document.getElementById('verify-error');
+const verifySuccess = document.getElementById('verify-success');
+
+const checkVerificationButton = document.getElementById('check-verification');
+
 const reviewSection = document.getElementById('review-section');
 const reviewForm = document.getElementById('review-form');
 const reviewedPersonSelect = document.getElementById('reviewed-person');
@@ -17,10 +25,38 @@ const reviewsDiv = document.getElementById('reviews');
 
 const logoutButton = document.getElementById('logout-button');
 
-// Utility Function to Display Errors
+// Password Reset Elements
+const forgotPasswordLink = document.getElementById('forgot-password-link');
+const passwordResetSection = document.getElementById('password-reset-section');
+const passwordResetForm = document.getElementById('password-reset-form');
+const resetError = document.getElementById('reset-error');
+const resetSuccess = document.getElementById('reset-success');
+const backToLoginLink = document.getElementById('back-to-login-link');
+
+// Utility Functions to Display Messages
 function displayAuthError(message) {
   authError.textContent = message;
   setTimeout(() => { authError.textContent = ''; }, 5000);
+}
+
+function displayVerifyError(message) {
+  verifyError.textContent = message;
+  setTimeout(() => { verifyError.textContent = ''; }, 5000);
+}
+
+function displayVerifySuccess(message) {
+  verifySuccess.textContent = message;
+  setTimeout(() => { verifySuccess.textContent = ''; }, 5000);
+}
+
+function displayResetError(message) {
+  resetError.textContent = message;
+  setTimeout(() => { resetError.textContent = ''; }, 5000);
+}
+
+function displayResetSuccess(message) {
+  resetSuccess.textContent = message;
+  setTimeout(() => { resetSuccess.textContent = ''; }, 5000);
 }
 
 function displayReviewError(message) {
@@ -36,24 +72,37 @@ function displayReviewSuccess(message) {
 // Authentication State Listener
 auth.onAuthStateChanged(user => {
   if (user) {
-    // User is signed in
-    authSection.classList.add('hidden');
-    reviewSection.classList.remove('hidden');
-    reviewsSection.classList.remove('hidden');
-    populateReviewedPersons(user.uid);
-    fetchReviews(user.uid);
+    if (user.emailVerified) {
+      // User is signed in and email is verified
+      authSection.classList.add('hidden');
+      passwordResetSection.classList.add('hidden');
+      verifyEmailSection.classList.add('hidden');
+      reviewSection.classList.remove('hidden');
+      reviewsSection.classList.remove('hidden');
+      populateReviewedPersons(user.uid);
+      fetchReviews(user.uid);
+    } else {
+      // User is signed in but email is not verified
+      authSection.classList.add('hidden');
+      reviewSection.classList.add('hidden');
+      reviewsSection.classList.add('hidden');
+      passwordResetSection.classList.add('hidden');
+      verifyEmailSection.classList.remove('hidden');
+    }
   } else {
     // User is signed out
     authSection.classList.remove('hidden');
+    verifyEmailSection.classList.add('hidden');
     reviewSection.classList.add('hidden');
     reviewsSection.classList.add('hidden');
+    passwordResetSection.classList.add('hidden');
   }
 });
 
 // Handle Signup
 signupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('signup-email').value;
+  const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
 
   try {
@@ -66,8 +115,11 @@ signupForm.addEventListener('submit', async (e) => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
+    // Send verification email
+    await user.sendEmailVerification();
+
     signupForm.reset();
-    displayReviewSuccess('Signup successful! You are now logged in.');
+    displayVerifySuccess('Signup successful! A verification email has been sent to your email address. Please verify to continue.');
   } catch (error) {
     console.error('Signup Error:', error);
     displayAuthError(error.message);
@@ -77,7 +129,7 @@ signupForm.addEventListener('submit', async (e) => {
 // Handle Login
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('login-email').value;
+  const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
 
   try {
@@ -89,7 +141,7 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Handle Logout
+// Handle Logout from Review Section
 logoutButton.addEventListener('click', async () => {
   try {
     await auth.signOut();
@@ -97,6 +149,76 @@ logoutButton.addEventListener('click', async () => {
   } catch (error) {
     console.error('Logout Error:', error);
     displayReviewError(error.message);
+  }
+});
+
+// Handle Logout from Verification Section
+logoutButtonVerify.addEventListener('click', async () => {
+  try {
+    await auth.signOut();
+    displayVerifySuccess('Logged out successfully.');
+  } catch (error) {
+    console.error('Logout Error:', error);
+    displayVerifyError(error.message);
+  }
+});
+
+// Resend Verification Email
+resendVerificationButton.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (user && !user.emailVerified) {
+    try {
+      await user.sendEmailVerification();
+      displayVerifySuccess('Verification email resent. Please check your inbox.');
+    } catch (error) {
+      console.error('Resend Verification Error:', error);
+      displayVerifyError('Failed to resend verification email.');
+    }
+  }
+});
+
+// Handle Verification Status Check
+checkVerificationButton.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (user) {
+    await user.reload(); // Reload user to get updated info
+    if (user.emailVerified) {
+      displayVerifySuccess('Email verified! Redirecting to the review system...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000); // Reload after 3 seconds
+    } else {
+      displayVerifyError('Email not verified yet. Please check your inbox.');
+    }
+  }
+});
+
+// Handle Forgot Password Link Click
+forgotPasswordLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  authSection.classList.add('hidden');
+  passwordResetSection.classList.remove('hidden');
+});
+
+// Handle Back to Login Link Click
+backToLoginLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  passwordResetSection.classList.add('hidden');
+  authSection.classList.remove('hidden');
+});
+
+// Handle Password Reset Form Submission
+passwordResetForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const resetEmail = document.getElementById('reset-email').value.trim();
+
+  try {
+    await auth.sendPasswordResetEmail(resetEmail);
+    passwordResetForm.reset();
+    displayResetSuccess('Password reset email sent! Please check your inbox.');
+  } catch (error) {
+    console.error('Password Reset Error:', error);
+    displayResetError(error.message);
   }
 });
 
@@ -142,14 +264,13 @@ reviewForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  const qualities = {
-    smiling: parseInt(document.getElementById('smiling').value),
-    intelligent: parseInt(document.getElementById('intelligent').value),
-    confident: parseInt(document.getElementById('confident').value),
-    optimist: parseInt(document.getElementById('optimist').value),
-    'short-tempered': parseInt(document.getElementById('short-tempered').value),
-    egoist: parseInt(document.getElementById('egoist').value)
-  };
+  // Collect selected qualities
+  const selectedQualities = Array.from(document.querySelectorAll('input[name="qualities"]:checked')).map(checkbox => checkbox.value);
+  
+  if (selectedQualities.length === 0) {
+    displayReviewError('Please select at least one quality.');
+    return;
+  }
 
   const comment = document.getElementById('comment').value.trim();
   if (!comment) {
@@ -158,12 +279,21 @@ reviewForm.addEventListener('submit', async (e) => {
   }
 
   const senderId = auth.currentUser.uid;
+  const reviewDocId = `${reviewedPersonId}_${senderId}`;
 
   try {
-    await db.collection('reviews').add({
+    const reviewRef = db.collection('reviews').doc(reviewDocId);
+    const doc = await reviewRef.get();
+    
+    if (doc.exists) {
+      displayReviewError('You have already reviewed this person.');
+      return;
+    }
+    
+    await reviewRef.set({
       senderId: senderId,
       reviewedPersonId: reviewedPersonId,
-      qualities: qualities,
+      qualities: selectedQualities, // Store as array
       comment: comment,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -198,12 +328,7 @@ async function fetchReviews(userId) {
 
       const reviewElement = document.createElement('div');
       reviewElement.innerHTML = `
-        <p><strong>Smiling:</strong> ${review.qualities.smiling}</p>
-        <p><strong>Intelligent:</strong> ${review.qualities.intelligent}</p>
-        <p><strong>Confident:</strong> ${review.qualities.confident}</p>
-        <p><strong>Optimist:</strong> ${review.qualities.optimist}</p>
-        <p><strong>Short Tempered:</strong> ${review.qualities['short-tempered']}</p>
-        <p><strong>Egoist:</strong> ${review.qualities.egoist}</p>
+        <p><strong>Qualities:</strong> ${review.qualities.join(', ')}</p>
         <p><strong>Comment:</strong> ${review.comment}</p>
         <hr>
       `;
