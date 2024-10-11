@@ -6,33 +6,86 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      background-color: #eef2f3;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-    .hidden {
-      display: none;
+    .container {
+      background-color: #fff;
+      padding: 30px;
+      margin: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 500px;
+      max-width: 90%;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
     }
     form {
       margin-bottom: 20px;
     }
     label {
       display: block;
-      margin-top: 10px;
+      margin-top: 15px;
+      color: #555;
     }
-    input, select, textarea, button {
+    input[type="email"],
+    input[type="password"],
+    select {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #4285F4;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #357ae8;
     }
     .error {
       color: red;
+      margin-top: 10px;
+      text-align: center;
     }
     .success {
       color: green;
+      margin-top: 10px;
+      text-align: center;
     }
-    #reviews div {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
+    .link {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .link button {
+      background: none;
+      border: none;
+      color: #4285F4;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+      margin: 5px;
+    }
+    /* Review Section Styles */
+    #review-section, #reviews-section {
+      width: 100%;
     }
     .qualities-list {
       display: flex;
@@ -43,17 +96,24 @@
       margin-right: 5%;
       margin-bottom: 5px;
     }
-    /* New Styles for Password Reset */
-    #password-reset-section {
-      margin-top: 20px;
+    /* Hidden Class */
+    .hidden {
+      display: none !important;
     }
-    #password-reset-section h2 {
-      margin-bottom: 10px;
+    /* Responsive Design */
+    @media (max-width: 600px) {
+      .qualities-list label {
+        width: 100%;
+        margin-right: 0;
+      }
     }
   </style>
   <!-- Firebase SDKs -->
+  <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <!-- Firebase Authentication -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <!-- Firebase Configuration -->
   <script src="firebase-config.js"></script>
@@ -61,68 +121,80 @@
   <script src="app.js" defer></script>
 </head>
 <body>
-  <h1>Anonymous Review System</h1>
-  
-  <!-- Authentication Section -->
-  <div id="auth-section">
-    <h2>Login</h2>
-    <form id="login-form">
-      <label for="login-email">Email:</label>
-      <input type="email" id="login-email" required>
-      
-      <label for="login-password">Password:</label>
-      <input type="password" id="login-password" required>
-      
-      <button type="submit">Login</button>
-    </form>
+  <!-- Authentication and Verification Section -->
+  <div class="container" id="auth-section">
+    <h1>Anonymous Review System</h1>
     
-    <!-- Forgot Password Link -->
-    <p><a href="#" id="forgot-password-link">Forgot Password?</a></p>
+    <!-- Login Form -->
+    <div id="login-section">
+      <h2>Login</h2>
+      <form id="login-form">
+        <label for="login-email">Email:</label>
+        <input type="email" id="login-email" required placeholder="Enter your email">
+      
+        <label for="login-password">Password:</label>
+        <input type="password" id="login-password" required placeholder="Enter your password">
+      
+        <button type="submit">Login</button>
+      </form>
+      <!-- Forgot Password and Sign Up Buttons -->
+      <div class="link">
+        <button id="forgot-password-button">Forgot Password?</button>
+        <button id="signup-button">Sign Up</button>
+      </div>
+    </div>
     
-    <!-- Password Reset Form (Initially Hidden) -->
-    <div id="password-reset-section" class="hidden">
+    
+    <!-- Forgot Password Form (Initially Hidden) -->
+    <div id="forgot-password-section" class="hidden">
       <h2>Reset Password</h2>
-      <form id="password-reset-form">
-        <label for="reset-email">Enter your email address:</label>
-        <input type="email" id="reset-email" required>
+      <form id="forgot-password-form">
+        <label for="forgot-email">Enter your email address:</label>
+        <input type="email" id="forgot-email" required placeholder="Enter your registered email">
         
         <button type="submit">Send Password Reset Email</button>
       </form>
-      <p id="reset-error" class="error"></p>
-      <p id="reset-success" class="success"></p>
-      
-      <!-- Back to Login Link -->
-      <p><a href="#" id="back-to-login-link">Back to Login</a></p>
+      <div class="link">
+        <button id="back-to-login-button">Back to Login</button>
+      </div>
+      <p id="forgot-password-error" class="error"></p>
+      <p id="forgot-password-success" class="success"></p>
     </div>
     
-    <h2>Sign Up</h2>
-    <form id="signup-form">
-      <label for="signup-email">Email:</label>
-      <input type="email" id="signup-email" required>
-      
-      <label for="signup-password">Password:</label>
-      <input type="password" id="signup-password" required>
-      
-      <button type="submit">Sign Up</button>
-    </form>
+    <!-- Sign Up Form (Initially Hidden) -->
+    <div id="signup-section" class="hidden">
+      <h2>Sign Up</h2>
+      <form id="signup-form">
+        <label for="signup-email">Email:</label>
+        <input type="email" id="signup-email" required placeholder="Enter your email">
+        
+        <label for="signup-password">Password:</label>
+        <input type="password" id="signup-password" required placeholder="Enter your password">
+        
+        <button type="submit">Sign Up</button>
+      </form>
+      <div class="link">
+        <button id="back-to-login-from-signup">Back to Login</button>
+      </div>
+      <p id="signup-error" class="error"></p>
+    </div>
     
-    <p id="auth-error" class="error"></p>
+    <!-- Email Verification Notice (Initially Hidden) -->
+    <div id="verify-email-section" class="hidden">
+      <h2>Verify Your Email</h2>
+      <p>A verification email has been sent to your email address. Please verify your email to continue.</p>
+      <button id="resend-verification-button">Resend Verification Email</button>
+      <button id="logout-button-verify">Logout</button>
+      <p id="verify-error" class="error"></p>
+      <p id="verify-success" class="success"></p>
+      <!-- Optional: Refresh Verification Status -->
+      <button id="check-verification-button">I've Verified My Email</button>
+    </div>
   </div>
   
-  <!-- Email Verification Notice -->
-  <div id="verify-email-section" class="hidden">
-    <h2>Verify Your Email</h2>
-    <p>A verification email has been sent to your email address. Please verify your email to continue.</p>
-    <button id="resend-verification">Resend Verification Email</button>
-    <button id="logout-button-verify">Logout</button>
-    <p id="verify-error" class="error"></p>
-    <p id="verify-success" class="success"></p>
-    <!-- Optional: Refresh Verification Status -->
-    <button id="check-verification">I've Verified My Email</button>
-  </div>
-  
-  <!-- Review Submission Section -->
-  <div id="review-section" class="hidden">
+  <!-- Review Submission Section (Initially Hidden) -->
+  <div class="container hidden" id="review-section">
+    <button class="btn btn-primary" id="profile-button" onclick="goToProfile()">Go to profile</button>
     <h2>Submit a Review</h2>
     <form id="review-form">
       <label for="reviewed-person">Select Person to Review:</label>
@@ -162,23 +234,23 @@
         <label><input type="checkbox" name="qualities" value="Unapproachable"> Unapproachable</label>
       </div>
       
-      <label for="comment">Comment:</label>
-      <textarea id="comment" name="comment" required></textarea>
-      
       <button type="submit">Submit Review</button>
     </form>
-    <a href="profile.html">My Profile</a>
-    <button id="logout-button">Logout</button>
-    
+    <div class="link">
+      <button id="logout-button">Logout</button>
+    </div>
     <p id="review-success" class="success"></p>
     <p id="review-error" class="error"></p>
   </div>
   
-  <!-- Reviews Display Section -->
-  <div id="reviews-section" class="hidden">
+  <!-- Reviews Display Section (Initially Hidden) -->
+  <div class="container hidden" id="reviews-section">
     <h2>Your Reviews</h2>
     <div id="reviews">
       <!-- Reviews will be populated dynamically -->
+    </div>
+    <div class="link">
+      <button id="back-to-review-form-button">Back to Submit a Review</button>
     </div>
   </div>
 </body>

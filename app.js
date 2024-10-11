@@ -1,341 +1,362 @@
 // app.js
 
-// DOM Elements
+// DOM Elements for Authentication
 const authSection = document.getElementById('auth-section');
 const loginForm = document.getElementById('login-form');
-const signupForm = document.getElementById('signup-form');
+const loginEmail = document.getElementById('login-email');
+const loginPassword = document.getElementById('login-password');
 const authError = document.getElementById('auth-error');
 
+const forgotPasswordButton = document.getElementById('forgot-password-button');
+const forgotPasswordSection = document.getElementById('forgot-password-section');
+const forgotPasswordForm = document.getElementById('forgot-password-form');
+const forgotEmail = document.getElementById('forgot-email');
+const forgotPasswordError = document.getElementById('forgot-password-error');
+const forgotPasswordSuccess = document.getElementById('forgot-password-success');
+const backToLoginButton = document.getElementById('back-to-login-button');
+
+const signupButton = document.getElementById('signup-button');
+const signupSection = document.getElementById('signup-section');
+const signupForm = document.getElementById('signup-form');
+const signupEmail = document.getElementById('signup-email');
+const signupPassword = document.getElementById('signup-password');
+const signupError = document.getElementById('signup-error');
+const backToLoginFromSignup = document.getElementById('back-to-login-from-signup');
+const loginSection = document.getElementById('login-section');
+
 const verifyEmailSection = document.getElementById('verify-email-section');
-const resendVerificationButton = document.getElementById('resend-verification');
+const resendVerificationButton = document.getElementById('resend-verification-button');
 const logoutButtonVerify = document.getElementById('logout-button-verify');
 const verifyError = document.getElementById('verify-error');
 const verifySuccess = document.getElementById('verify-success');
+const checkVerificationButton = document.getElementById('check-verification-button');
 
-const checkVerificationButton = document.getElementById('check-verification');
-
+// DOM Elements for Reviews
 const reviewSection = document.getElementById('review-section');
 const reviewForm = document.getElementById('review-form');
 const reviewedPersonSelect = document.getElementById('reviewed-person');
-const reviewSuccess = document.getElementById('review-success');
 const reviewError = document.getElementById('review-error');
+const reviewSuccess = document.getElementById('review-success');
+const logoutButton = document.getElementById('logout-button');
 
 const reviewsSection = document.getElementById('reviews-section');
 const reviewsDiv = document.getElementById('reviews');
+const backToReviewFormButton = document.getElementById('back-to-review-form-button');
 
-const logoutButton = document.getElementById('logout-button');
-
-// Password Reset Elements
-const forgotPasswordLink = document.getElementById('forgot-password-link');
-const passwordResetSection = document.getElementById('password-reset-section');
-const passwordResetForm = document.getElementById('password-reset-form');
-const resetError = document.getElementById('reset-error');
-const resetSuccess = document.getElementById('reset-success');
-const backToLoginLink = document.getElementById('back-to-login-link');
-
-// Utility Functions to Display Messages
-function displayAuthError(message) {
-  authError.textContent = message;
-  setTimeout(() => { authError.textContent = ''; }, 5000);
-}
-
-function displayVerifyError(message) {
-  verifyError.textContent = message;
-  setTimeout(() => { verifyError.textContent = ''; }, 5000);
-}
-
-function displayVerifySuccess(message) {
-  verifySuccess.textContent = message;
-  setTimeout(() => { verifySuccess.textContent = ''; }, 5000);
-}
-
-function displayResetError(message) {
-  resetError.textContent = message;
-  setTimeout(() => { resetError.textContent = ''; }, 5000);
-}
-
-function displayResetSuccess(message) {
-  resetSuccess.textContent = message;
-  setTimeout(() => { resetSuccess.textContent = ''; }, 5000);
-}
-
-function displayReviewError(message) {
-  reviewError.textContent = message;
-  setTimeout(() => { reviewError.textContent = ''; }, 5000);
-}
-
-function displayReviewSuccess(message) {
-  reviewSuccess.textContent = message;
-  setTimeout(() => { reviewSuccess.textContent = ''; }, 5000);
-}
-
-// Authentication State Listener
-auth.onAuthStateChanged(user => {
-  if (user) {
-    if (user.emailVerified) {
-      // User is signed in and email is verified
-      authSection.classList.add('hidden');
-      passwordResetSection.classList.add('hidden');
-      verifyEmailSection.classList.add('hidden');
-      reviewSection.classList.remove('hidden');
-      reviewsSection.classList.remove('hidden');
-      populateReviewedPersons(user.uid);
-      fetchReviews(user.uid);
-    } else {
-      // User is signed in but email is not verified
-      authSection.classList.add('hidden');
-      reviewSection.classList.add('hidden');
-      reviewsSection.classList.add('hidden');
-      passwordResetSection.classList.add('hidden');
-      verifyEmailSection.classList.remove('hidden');
-    }
-  } else {
-    // User is signed out
-    authSection.classList.remove('hidden');
-    verifyEmailSection.classList.add('hidden');
-    reviewSection.classList.add('hidden');
-    reviewsSection.classList.add('hidden');
-    passwordResetSection.classList.add('hidden');
-  }
-});
-
-// Handle Signup
-signupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
-
-  try {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-
-    // Add user to 'users' collection
-    await db.collection('users').doc(user.uid).set({
-      email: user.email,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Send verification email
-    await user.sendEmailVerification();
-
-    signupForm.reset();
-    displayVerifySuccess('Signup successful! A verification email has been sent to your email address. Please verify to continue.');
-  } catch (error) {
-    console.error('Signup Error:', error);
-    displayAuthError(error.message);
-  }
-});
-
-// Handle Login
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-    loginForm.reset();
-  } catch (error) {
-    console.error('Login Error:', error);
-    displayAuthError(error.message);
-  }
-});
-
-// Handle Logout from Review Section
-logoutButton.addEventListener('click', async () => {
-  try {
-    await auth.signOut();
-    displayReviewSuccess('Logged out successfully.');
-  } catch (error) {
-    console.error('Logout Error:', error);
-    displayReviewError(error.message);
-  }
-});
-
-// Handle Logout from Verification Section
-logoutButtonVerify.addEventListener('click', async () => {
-  try {
-    await auth.signOut();
-    displayVerifySuccess('Logged out successfully.');
-  } catch (error) {
-    console.error('Logout Error:', error);
-    displayVerifyError(error.message);
-  }
-});
-
-// Resend Verification Email
-resendVerificationButton.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  if (user && !user.emailVerified) {
-    try {
-      await user.sendEmailVerification();
-      displayVerifySuccess('Verification email resent. Please check your inbox.');
-    } catch (error) {
-      console.error('Resend Verification Error:', error);
-      displayVerifyError('Failed to resend verification email.');
-    }
-  }
-});
-
-// Handle Verification Status Check
-checkVerificationButton.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  if (user) {
-    await user.reload(); // Reload user to get updated info
-    if (user.emailVerified) {
-      displayVerifySuccess('Email verified! Redirecting to the review system...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000); // Reload after 3 seconds
-    } else {
-      displayVerifyError('Email not verified yet. Please check your inbox.');
-    }
-  }
-});
-
-// Handle Forgot Password Link Click
-forgotPasswordLink.addEventListener('click', (e) => {
-  e.preventDefault();
-  authSection.classList.add('hidden');
-  passwordResetSection.classList.remove('hidden');
-});
-
-// Handle Back to Login Link Click
-backToLoginLink.addEventListener('click', (e) => {
-  e.preventDefault();
-  passwordResetSection.classList.add('hidden');
-  authSection.classList.remove('hidden');
-});
-
-// Handle Password Reset Form Submission
-passwordResetForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const resetEmail = document.getElementById('reset-email').value.trim();
-
-  try {
-    await auth.sendPasswordResetEmail(resetEmail);
-    passwordResetForm.reset();
-    displayResetSuccess('Password reset email sent! Please check your inbox.');
-  } catch (error) {
-    console.error('Password Reset Error:', error);
-    displayResetError(error.message);
-  }
-});
-
-// Populate Reviewed Persons Dropdown
-async function populateReviewedPersons(currentUserId) {
+// Populate Reviewed Person Dropdown
+async function populateReviewedPerson() {
   try {
     const usersSnapshot = await db.collection('users').get();
-    reviewedPersonSelect.innerHTML = '<option value="">--Select--</option>'; // Reset options
-
     usersSnapshot.forEach(doc => {
       const user = doc.data();
-      if (doc.id !== currentUserId) { // Exclude current user
+      // Prevent users from reviewing themselves
+      if (doc.id !== firebase.auth().currentUser.uid) {
         const option = document.createElement('option');
         option.value = doc.id;
         option.textContent = user.email;
         reviewedPersonSelect.appendChild(option);
       }
     });
-
-    // If no other users are available
-    if (reviewedPersonSelect.options.length === 1) {
-      const option = document.createElement('option');
-      option.value = "";
-      option.textContent = "No users available to review.";
-      reviewedPersonSelect.appendChild(option);
-      reviewedPersonSelect.disabled = true;
-    } else {
-      reviewedPersonSelect.disabled = false;
-    }
   } catch (error) {
     console.error('Error fetching users:', error);
-    displayReviewError('Failed to load users for review.');
   }
 }
 
-// Handle Review Submission
+// Toggle Sections
+forgotPasswordButton.addEventListener('click', () => {
+  loginSection.classList.add('hidden');
+  signupSection.classList.add('hidden');
+  forgotPasswordSection.classList.remove('hidden');
+});
+
+backToLoginButton.addEventListener('click', () => {
+  forgotPasswordSection.classList.add('hidden');
+  loginSection.classList.remove('hidden');
+});
+
+signupButton.addEventListener('click', () => {
+  console.log("signup button clicked");
+  loginSection.classList.add('hidden');
+  forgotPasswordSection.classList.add('hidden');
+  signupSection.classList.remove('hidden');
+});
+
+backToLoginFromSignup.addEventListener('click', () => {
+  signupSection.classList.add('hidden');
+  loginSection.classList.remove('hidden');
+});
+
+// Handle Sign Up Form Submission
+signupForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = signupEmail.value.trim();
+  const password = signupPassword.value.trim();
+  
+  // Clear previous errors
+  signupError.textContent = '';
+  
+  try {
+    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+    console.log('User signed up:', userCredential.user);
+    
+    // Add user to Firestore 'users' collection
+    await db.collection('users').doc(userCredential.user.uid).set({
+      email: email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      // Add other user-specific fields if necessary
+    });
+    
+    // Send Email Verification
+    await userCredential.user.sendEmailVerification();
+    
+    // Show Email Verification Notice
+    signupSection.classList.add('hidden');
+    verifyEmailSection.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error signing up:', error);
+    signupError.textContent = error.message;
+  }
+});
+
+// Handle Login Form Submission
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value.trim();
+  
+  // Clear previous errors
+  //authError.textContent = '';
+  
+  try {
+    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    console.log('User logged in:', userCredential.user);
+    // Firebase auth state listener will handle UI changes
+  } catch (error) {
+    console.error('Error logging in:', error);
+    authError.textContent = error.message;
+  }
+});
+
+// Handle Forgot Password Form Submission
+forgotPasswordForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = forgotEmail.value.trim();
+  
+  // Clear previous messages
+  forgotPasswordError.textContent = '';
+  forgotPasswordSuccess.textContent = '';
+  
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    console.log('Password reset email sent to:', email);
+    forgotPasswordSuccess.textContent = 'Password reset email sent! Please check your inbox.';
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    if (error.code === 'auth/user-not-found') {
+      forgotPasswordError.textContent = 'No account found with this email.';
+    } else {
+      forgotPasswordError.textContent = error.message;
+    }
+  }
+});
+
+// Resend Verification Email
+resendVerificationButton.addEventListener('click', async () => {
+  const user = firebase.auth().currentUser;
+  if (user) {
+    try {
+      await user.sendEmailVerification();
+      console.log('Verification email resent.');
+      verifySuccess.textContent = 'Verification email resent! Please check your inbox.';
+      verifyError.textContent = '';
+    } catch (error) {
+      console.error('Error resending verification email:', error);
+      verifyError.textContent = error.message;
+      verifySuccess.textContent = '';
+    }
+  }
+});
+
+// Logout from Verification Section
+logoutButtonVerify.addEventListener('click', async () => {
+  try {
+    await firebase.auth().signOut();
+    verifyEmailSection.classList.add('hidden');
+    authSection.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+});
+
+// Check Email Verification Status
+checkVerificationButton.addEventListener('click', async () => {
+  const user = firebase.auth().currentUser;
+  if (user) {
+    await user.reload();
+    if (user.emailVerified) {
+      verifyEmailSection.classList.add('hidden');
+      authSection.classList.add('hidden');
+      reviewSection.classList.remove('hidden');
+      reviewsSection.classList.remove('hidden');
+      populateReviewedPerson();
+      displayReviews(user.uid);
+    } else {
+      verifySuccess.textContent = '';
+      verifyError.textContent = 'Email not verified yet. Please check your inbox.';
+    }
+  }
+});
+
+// Handle Logout from Review Section
+logoutButton.addEventListener('click', async () => {
+  try {
+    await firebase.auth().signOut();
+    reviewSection.classList.add('hidden');
+    reviewsSection.classList.add('hidden');
+    authSection.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+});
+
+// Authentication State Listener
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    if (user.emailVerified) {
+      // User is signed in and email is verified
+      console.log('User is authenticated and email is verified.');
+      authSection.classList.add('hidden');
+      signupSection.classList.add('hidden');
+      forgotPasswordSection.classList.add('hidden');
+      verifyEmailSection.classList.add('hidden');
+      reviewSection.classList.remove('hidden');
+      reviewsSection.classList.remove('hidden');
+      populateReviewedPerson();
+      displayReviews(user.uid);
+    } else {
+      // User is signed in but email is not verified
+      console.log('User is authenticated but email is not verified.');
+      authSection.classList.add('hidden');
+      signupSection.classList.add('hidden');
+      forgotPasswordSection.classList.add('hidden');
+      verifyEmailSection.classList.remove('hidden');
+      reviewSection.classList.add('hidden');
+      reviewsSection.classList.add('hidden');
+      window.alert("Please verify your email");
+
+    }
+  } else {
+    // User is signed out
+    console.log('User is signed out.');
+    authSection.classList.remove('hidden');
+    signupSection.classList.add('hidden');
+    forgotPasswordSection.classList.add('hidden');
+    verifyEmailSection.classList.add('hidden');
+    reviewSection.classList.add('hidden');
+    reviewsSection.classList.add('hidden');
+  }
+});
+
+// Handle Review Form Submission
 reviewForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const reviewedPersonId = reviewedPersonSelect.value;
-  if (!reviewedPersonId) {
-    displayReviewError('Please select a person to review.');
-    return;
-  }
-
-  // Collect selected qualities
-  const selectedQualities = Array.from(document.querySelectorAll('input[name="qualities"]:checked')).map(checkbox => checkbox.value);
+  const qualities = Array.from(document.querySelectorAll('input[name="qualities"]:checked')).map(cb => cb.value);
   
-  if (selectedQualities.length === 0) {
-    displayReviewError('Please select at least one quality.');
+  // Clear previous messages
+  reviewError.textContent = '';
+  reviewSuccess.textContent = '';
+  
+  if (!reviewedPersonId) {
+    reviewError.textContent = 'Please select a person to review.';
     return;
   }
-
-  const comment = document.getElementById('comment').value.trim();
-  if (!comment) {
-    displayReviewError('Please enter a comment.');
+  
+  if (qualities.length === 0) {
+    reviewError.textContent = 'Please select at least one quality.';
     return;
   }
-
-  const senderId = auth.currentUser.uid;
-  const reviewDocId = `${reviewedPersonId}_${senderId}`;
-
+  
   try {
-    const reviewRef = db.collection('reviews').doc(reviewDocId);
-    const doc = await reviewRef.get();
-    
-    if (doc.exists) {
-      displayReviewError('You have already reviewed this person.');
-      return;
+    const user = firebase.auth().currentUser;
+    if (user) {
+      await db.collection('reviews').add({
+        senderId: user.uid,
+        reviewedPersonId: reviewedPersonId,
+        qualities: qualities,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      console.log('Review submitted successfully.');
+      reviewSuccess.textContent = 'Review submitted successfully!';
+      reviewForm.reset();
+      displayReviews(user.uid);
+    } else {
+      reviewError.textContent = 'You must be logged in to submit a review.';
     }
-    
-    await reviewRef.set({
-      senderId: senderId,
-      reviewedPersonId: reviewedPersonId,
-      qualities: selectedQualities, // Store as array
-      comment: comment,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    reviewForm.reset();
-    displayReviewSuccess('Review submitted successfully!');
-    fetchReviews(senderId); // Refresh reviews
   } catch (error) {
     console.error('Error submitting review:', error);
-    displayReviewError('Failed to submit review.');
+    reviewError.textContent = 'Failed to submit review. Please try again.';
   }
 });
 
-// Fetch and Display Reviews for the Logged-In User
-async function fetchReviews(userId) {
+// Display Reviews
+async function displayReviews(userId) {
   try {
     const reviewsSnapshot = await db.collection('reviews')
-      .where('reviewedPersonId', '==', userId)
+      .where('senderId', '==', userId)
       .orderBy('timestamp', 'desc')
       .get();
-
-    reviewsDiv.innerHTML = ''; // Clear existing reviews
-
+      
+    reviewsDiv.innerHTML = '';
+    
     if (reviewsSnapshot.empty) {
-      reviewsDiv.innerHTML = '<p>No reviews yet.</p>';
+      reviewsDiv.innerHTML = '<p>No reviews submitted yet.</p>';
       return;
     }
-
-    reviewsSnapshot.forEach(doc => {
-      const data = doc.data();
-      const review = data;
-
-      const reviewElement = document.createElement('div');
-      reviewElement.innerHTML = `
+    
+    reviewsSnapshot.forEach(async doc => {
+      const review = doc.data();
+      const reviewedPersonEmail = await getEmailById(review.reviewedPersonId);
+      const reviewDiv = document.createElement('div');
+      reviewDiv.style.border = '1px solid #ccc';
+      reviewDiv.style.padding = '10px';
+      reviewDiv.style.marginBottom = '10px';
+      reviewDiv.innerHTML = `
+        <p><strong>Reviewed Person:</strong> ${reviewedPersonEmail}</p>
         <p><strong>Qualities:</strong> ${review.qualities.join(', ')}</p>
-        <p><strong>Comment:</strong> ${review.comment}</p>
-        <hr>
+        <p><em>Submitted on: ${review.timestamp ? review.timestamp.toDate().toLocaleString() : 'N/A'}</em></p>
       `;
-      reviewsDiv.appendChild(reviewElement);
+      reviewsDiv.appendChild(reviewDiv);
     });
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    displayReviewError('Failed to load reviews.');
+    reviewsDiv.innerHTML = '<p>Error fetching reviews. Please try again later.</p>';
   }
+}
+
+// Helper Function to Get Email by User ID
+async function getEmailById(userId) {
+  try {
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+      return userDoc.data().email;
+    } else {
+      return 'Unknown User';
+    }
+  } catch (error) {
+    console.error('Error fetching user email:', error);
+    return 'Unknown User';
+  }
+}
+
+// Handle Back to Review Form Button
+backToReviewFormButton.addEventListener('click', () => {
+  reviewsSection.classList.add('hidden');
+  reviewSection.classList.remove('hidden');
+});
+
+
+function goToProfile() {
+  window.location.href = "profile.html";
 }
