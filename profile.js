@@ -6,23 +6,7 @@ const selfAttributesForm = document.getElementById('self-attributes-form');
 const selfAttributesError = document.getElementById('self-attributes-error');
 const selfAttributesSuccess = document.getElementById('self-attributes-success');
 
-const vennDiagramDiv = document.getElementById('venn-diagram');
-const attributeListsDiv = document.getElementById('attribute-lists');
-
-// Initialize D3-tip
-/*
-const tip = d3.tip()
-  .attr('class', 'd3-tip')
-  .offset([-10, 0])
-  .html(function(event, d) {
-    let tooltipContent = '';
-    if (d.sets.length === 1) {
-      tooltipContent = `<strong>${d.sets[0]}</strong><br>Attributes: ${d.size}`;
-    } else if (d.sets.length === 2) {
-      tooltipContent = `<strong>Both</strong><br>Shared Attributes: ${d.size}`;
-    }
-    return tooltipContent;
-  });*/
+const johariWindowDiv = document.getElementById('johari-window');
 
 // Utility Functions to Display Messages
 function displaySelfAttributesError(message) {
@@ -44,7 +28,7 @@ window.auth.onAuthStateChanged(user => {
       console.log('User is verified. Displaying profile section.');
       profileSection.classList.remove('hidden');
       populateSelfAttributesForm(user.uid);
-      generateVennDiagram(user.uid);
+      generateJohariWindow(user.uid);
     } else {
       // User is signed in but email is not verified
       alert('Please verify your email to access the profile page.');
@@ -66,13 +50,14 @@ async function populateSelfAttributesForm(userId) {
       const data = userDoc.data();
       console.log('User data:', data);
       if (data.selfAttributes && Array.isArray(data.selfAttributes)) {
-        data.selfAttributes.forEach(attr => {
-          const checkbox = selfAttributesForm.querySelector(`input[value="${attr}"]`);
-          if (checkbox) {
-            checkbox.checked = true;
-            console.log(`Checked attribute: ${attr}`);
-          } else {
-            console.warn(`Checkbox for attribute "${attr}" not found.`);
+        // Iterate over each button and set active state based on saved attributes
+        const attributeButtons = selfAttributesForm.querySelectorAll('.attribute-btn');
+        attributeButtons.forEach(button => {
+          const attr = button.getAttribute('data-attribute');
+          if (data.selfAttributes.includes(attr)) {
+            button.classList.add('active');
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-primary');
           }
         });
       } else {
@@ -87,6 +72,25 @@ async function populateSelfAttributesForm(userId) {
   }
 }
 
+// Handle Attribute Button Clicks
+const attributeButtons = document.querySelectorAll('.attribute-btn');
+attributeButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const attr = button.getAttribute('data-attribute');
+    if (button.classList.contains('active')) {
+      // Deselect the attribute
+      button.classList.remove('active', 'btn-primary');
+      button.classList.add('btn-outline-primary');
+      console.log(`Attribute deselected: ${attr}`);
+    } else {
+      // Select the attribute
+      button.classList.add('active', 'btn-primary');
+      button.classList.remove('btn-outline-primary');
+      console.log(`Attribute selected: ${attr}`);
+    }
+  });
+});
+
 // Handle Self-Attributes Form Submission
 selfAttributesForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -97,8 +101,8 @@ selfAttributesForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Collect selected self attributes
-  const selectedSelfAttributes = Array.from(document.querySelectorAll('input[name="self-qualities"]:checked')).map(checkbox => checkbox.value);
+  // Collect selected self attributes based on active buttons
+  const selectedSelfAttributes = Array.from(document.querySelectorAll('.attribute-btn.active')).map(button => button.getAttribute('data-attribute'));
   console.log('Selected self attributes:', selectedSelfAttributes);
 
   if (selectedSelfAttributes.length === 0) {
@@ -113,18 +117,19 @@ selfAttributesForm.addEventListener('submit', async (e) => {
       selfAttributes: selectedSelfAttributes
     });
     displaySelfAttributesSuccess('Your attributes have been saved.');
-    // Regenerate Venn Diagram
-    generateVennDiagram(user.uid);
+    // Regenerate Johari Window
+    generateJohariWindow(user.uid);
   } catch (error) {
     console.error('Error saving self attributes:', error);
     displaySelfAttributesError('Failed to save your attributes.');
   }
 });
 
-// Generate Venn Diagram
-async function generateVennDiagram(userId) {
+// Generate Johari Window
+async function generateJohariWindow(userId) {
   try {
-    console.log('Generating Venn diagram for user:', userId);
+    console.log('Generating Johari Window for user:', userId);
+    
     // Fetch self attributes
     const userDoc = await window.db.collection('users').doc(userId).get();
     let selfAttributes = [];
@@ -157,163 +162,175 @@ async function generateVennDiagram(userId) {
     });
 
     console.log('Aggregated othersAttributes:', othersAttributes);
-    // Remove duplicates
-    othersAttributes = Array.from(new Set(othersAttributes));
-    console.log('Unique othersAttributes:', othersAttributes);
 
-    // Compute overlapping attributes
-    const overlappingAttributes = selfAttributes.filter(attr => othersAttributes.includes(attr));
-    console.log('Overlapping attributes:', overlappingAttributes);
+    // Create a frequency map for othersAttributes
+    const frequencyMap = {};
+    othersAttributes.forEach(attr => {
+      if (frequencyMap[attr]) {
+        frequencyMap[attr]++;
+      } else {
+        frequencyMap[attr] = 1;
+      }
+    });
 
-    // Compute unique attributes
-    const uniqueSelfAttributes = selfAttributes.filter(attr => !othersAttributes.includes(attr));
-    const uniqueOthersAttributes = othersAttributes.filter(attr => !selfAttributes.includes(attr));
-    console.log('Unique selfAttributes:', uniqueSelfAttributes);
-    console.log('Unique othersAttributes:', uniqueOthersAttributes);
+    console.log('Frequency Map:', frequencyMap);
 
-    // Prepare data for Venn Diagram
-    const sets = [
-      { sets: ['Self'], size: uniqueSelfAttributes.length },
-      { sets: ['Others'], size: uniqueOthersAttributes.length },
-      { sets: ['Self', 'Others'], size: overlappingAttributes.length }
-    ];
+    // Calculate Johari Window Quadrants
+    // Open Area: Attributes known by both you and others
+    const openArea = selfAttributes.filter(attr => frequencyMap[attr]).map(attr => ({
+      name: attr,
+      count: frequencyMap[attr]
+    }));
 
-    console.log('Venn sets:', sets);
+    // Blind Area: Attributes known by others but not by you
+    // We need to ensure unique attributes and their counts
+    const blindAreaMap = {};
+    othersAttributes.forEach(attr => {
+      if (!selfAttributes.includes(attr)) {
+        if (blindAreaMap[attr]) {
+          blindAreaMap[attr]++;
+        } else {
+          blindAreaMap[attr] = 1;
+        }
+      }
+    });
+    const blindArea = Object.keys(blindAreaMap).map(attr => ({
+      name: attr,
+      count: blindAreaMap[attr]
+    }));
+
+    // Hidden Area: Attributes known by you but not by others
+    const hiddenArea = selfAttributes.filter(attr => !frequencyMap[attr]);
+
+    console.log('Open Area:', openArea);
+    console.log('Blind Area:', blindArea);
+    console.log('Hidden Area:', hiddenArea);
+
+    // Determine the maximum number of attributes in any quadrant
+    const maxAttributes = Math.max(openArea.length, blindArea.length, hiddenArea.length);
+    console.log('Maximum attributes in any quadrant:', maxAttributes);
+
+    // Define base height and additional height per attribute
+    const baseHeight = 400; // Base height for up to 5 attributes
+    const additionalHeightPerAttribute = 20; // Additional height for each attribute beyond the base
+
+    // Calculate the required height
+    const requiredHeight = baseHeight + Math.max(0, maxAttributes - 5) * additionalHeightPerAttribute;
+    console.log('Required SVG height:', requiredHeight);
 
     // Clear previous diagram
-    vennDiagramDiv.innerHTML = '';
+    johariWindowDiv.innerHTML = '';
 
-    // Create SVG container
-    const svg = d3.select("#venn-diagram").append("svg")
-      .attr("width", "100%")
-      .attr("height", "100%");
+    // Create Johari Window Visualization with dynamic height
+    createJohariWindow(
+      { open: openArea.length, blind: blindArea.length, hidden: hiddenArea.length },
+      openArea,
+      blindArea,
+      hiddenArea,
+      requiredHeight
+    );
 
-    // Create Venn Diagram
-    const chart = venn.VennDiagram()
-      .width(600)
-      .height(400);
-
-    svg.datum(sets).call(chart);
-
-    // Attach Bootstrap tooltips
-    svg.selectAll("g")
-      .each(function(d, i) {
-        const group = d3.select(this);
-        const path = group.select("path");
-        
-        // Determine tooltip content
-        let tooltipContent = '';
-        if (d.sets.length === 1) {
-          tooltipContent = `<strong>${d.sets[0]}</strong><br>Attributes: ${d.size}`;
-        } else if (d.sets.length === 2) {
-          tooltipContent = `<strong>Both</strong><br>Shared Attributes: ${d.size}`;
-        }
-
-        // Assign Bootstrap tooltip attributes
-        path
-          .attr('data-bs-toggle', 'tooltip')
-          .attr('data-bs-html', 'true')
-          .attr('title', tooltipContent);
-
-        // Initialize Bootstrap tooltip
-        new bootstrap.Tooltip(path.node());
-      });
-
-    // Add labels inside the circles
-    svg.selectAll("g")
-      .each(function(d) {
-        const group = d3.select(this);
-        // Remove existing labels to prevent duplication
-        group.selectAll("text").remove();
-
-        let labelText = '';
-        if (d.sets.length === 1) {
-          labelText = d.sets[0] === 'Self' ? uniqueSelfAttributes.join(', ') : uniqueOthersAttributes.join(', ');
-        } else if (d.sets.length === 2) {
-          labelText = overlappingAttributes.join(', ');
-        }
-
-        if (labelText.length > 0) {
-          group.append("text")
-            .attr("text-anchor", "middle")
-            .attr("dy", ".35em")
-            .text(labelText)
-            .style("font-size", "12px");
-        }
-      });
-
-    // Add categorized lists below the Venn diagram
-    addAttributeLists(uniqueSelfAttributes, overlappingAttributes, uniqueOthersAttributes);
-
-    console.log('Venn diagram generated successfully.');
+    console.log('Johari Window generated successfully.');
   } catch (error) {
-    console.error('Error generating Venn diagram:', error);
-    vennDiagramDiv.innerHTML = '<p class="text-danger">Failed to generate Venn diagram.</p>';
+    console.error('Error generating Johari Window:', error);
+    johariWindowDiv.innerHTML = '<p class="text-danger">Failed to generate Johari Window.</p>';
   }
 }
 
+// Function to Create Johari Window Visualization
+function createJohariWindow(johariData, openArea, blindArea, hiddenArea, svgHeight) {
+  // Using D3.js to create a simple Johari Window
+  const width = 600;
+  const height = svgHeight; // Dynamic height based on attribute count
 
-// Function to add categorized lists below the Venn diagram
-function addAttributeLists(selfAttrs, overlappingAttrs, othersAttrs) {
-  try {
-    console.log('Adding categorized attribute lists.');
-    // Remove existing lists if any
-    if (attributeListsDiv) {
-      attributeListsDiv.innerHTML = '';
-      console.log('Existing attribute lists removed.');
-    }
+  const svg = d3.select("#johari-window").append("svg")
+    .attr("width", width)
+    .attr("height", height);
 
-    // Create Self Attributes List
-    const selfListCol = document.createElement('div');
-    selfListCol.classList.add('col-md-4');
-    const selfHeader = document.createElement('h5');
-    selfHeader.textContent = 'Attributes You Believe Others Associate with You';
-    const selfUl = document.createElement('ul');
-    selfAttrs.forEach(attr => {
-      const li = document.createElement('li');
-      li.textContent = attr;
-      selfUl.appendChild(li);
-    });
-    selfListCol.appendChild(selfHeader);
-    selfListCol.appendChild(selfUl);
+  // Define quadrant dimensions
+  const quadrants = [
+    { name: 'Open Area', x: 0, y: 0, width: width / 2, height: height / 2, fill: '#ADD8E6' },       // Blue
+    { name: 'Blind Area', x: width / 2, y: 0, width: width / 2, height: height / 2, fill: '#90EE90' }, // Green
+    { name: 'Hidden Area', x: 0, y: height / 2, width: width / 2, height: height / 2, fill: '#FFB6C1' }, // Pink
+    // Removed: Unknown Area
+  ];
 
-    // Create Overlapping Attributes List
-    const overlapListCol = document.createElement('div');
-    overlapListCol.classList.add('col-md-4');
-    const overlapHeader = document.createElement('h5');
-    overlapHeader.textContent = 'Attributes Common to Both';
-    const overlapUl = document.createElement('ul');
-    overlappingAttrs.forEach(attr => {
-      const li = document.createElement('li');
-      li.textContent = attr;
-      overlapUl.appendChild(li);
-    });
-    overlapListCol.appendChild(overlapHeader);
-    overlapListCol.appendChild(overlapUl);
+  // Draw quadrants
+  svg.selectAll("rect")
+    .data(quadrants)
+    .enter()
+    .append("rect")
+    .attr("x", d => d.x)
+    .attr("y", d => d.y)
+    .attr("width", d => d.width)
+    .attr("height", d => d.height)
+    .attr("fill", d => d.fill)
+    .attr("stroke", "black")
+    .attr("stroke-width", 1);
 
-    // Create Others' Attributes List (Without Counts)
-    const othersListCol = document.createElement('div');
-    othersListCol.classList.add('col-md-4');
-    const othersHeader = document.createElement('h5');
-    othersHeader.textContent = 'Attributes Others Associate with You';
-    const othersUl = document.createElement('ul');
+  // Add quadrant labels
+  svg.selectAll("text.quadrant-label")
+    .data(quadrants)
+    .enter()
+    .append("text")
+    .attr("class", "quadrant-label")
+    .attr("x", d => d.x + d.width / 2)
+    .attr("y", d => d.y + 20)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "16px")
+    .attr("font-weight", "bold")
+    .text(d => d.name);
 
-    othersAttrs.forEach(attr => {
-      const li = document.createElement('li');
-      li.textContent = attr;
-      othersUl.appendChild(li);
-    });
+  // Add attribute strings inside quadrants
+  // Open Area
+  svg.append("foreignObject")
+    .attr("x", quadrants[0].x + 10)
+    .attr("y", quadrants[0].y + 40)
+    .attr("width", quadrants[0].width - 20)
+    .attr("height", quadrants[0].height - 50)
+    .append("xhtml:div")
+    .style("font-size", "14px") // Adjust font size as needed
+    .style("overflow-wrap", "break-word")
+    .html(generateAttributeStringWithCountHTML(openArea));
 
-    othersListCol.appendChild(othersHeader);
-    othersListCol.appendChild(othersUl);
+  // Blind Area
+  svg.append("foreignObject")
+    .attr("x", quadrants[1].x + 10)
+    .attr("y", quadrants[1].y + 40)
+    .attr("width", quadrants[1].width - 20)
+    .attr("height", quadrants[1].height - 50)
+    .append("xhtml:div")
+    .style("font-size", "14px") // Adjust font size as needed
+    .style("overflow-wrap", "break-word")
+    .html(generateAttributeStringWithCountHTML(blindArea));
 
-    // Append all lists to the container
-    attributeListsDiv.appendChild(selfListCol);
-    attributeListsDiv.appendChild(overlapListCol);
-    attributeListsDiv.appendChild(othersListCol);
+  // Hidden Area
+  svg.append("foreignObject")
+    .attr("x", quadrants[2].x + 10)
+    .attr("y", quadrants[2].y + 40)
+    .attr("width", quadrants[2].width - 20)
+    .attr("height", quadrants[2].height - 50)
+    .append("xhtml:div")
+    .style("font-size", "14px") // Adjust font size as needed
+    .style("overflow-wrap", "break-word")
+    .html(generateAttributeStringHTML(hiddenArea));
 
-    console.log('Categorized attribute lists added successfully.');
-  } catch (error) {
-    console.error('Error adding attribute lists:', error);
+  // Note: Unknown Area has been removed
+}
+
+// Helper Function to Generate Comma-Separated Attribute Strings with Counts
+function generateAttributeStringWithCountHTML(attributes) {
+  if (attributes.length === 0) {
+    return '<p>No attributes.</p>';
   }
+  // Format: AttributeName (count)
+  return `<p>${attributes.map(attr => `${attr.name} (${attr.count})`).join(', ')}</p>`;
+}
+
+// Helper Function to Generate Comma-Separated Attribute Strings (Without Counts)
+function generateAttributeStringHTML(attributes) {
+  if (attributes.length === 0) {
+    return '<p>No attributes.</p>';
+  }
+  return `<p>${attributes.join(', ')}</p>`;
 }

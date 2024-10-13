@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Anonymous Review System</title>
@@ -14,6 +15,7 @@
       align-items: center;
       min-height: 100vh;
     }
+
     .container {
       background-color: #fff;
       padding: 30px;
@@ -23,18 +25,23 @@
       width: 500px;
       max-width: 90%;
     }
-    h1, h2 {
+
+    h1,
+    h2 {
       text-align: center;
       color: #333;
     }
+
     form {
       margin-bottom: 20px;
     }
+
     label {
       display: block;
       margin-top: 15px;
       color: #555;
     }
+
     input[type="email"],
     input[type="password"],
     select {
@@ -45,6 +52,7 @@
       border-radius: 4px;
       box-sizing: border-box;
     }
+
     button {
       width: 100%;
       padding: 12px;
@@ -56,23 +64,28 @@
       font-size: 16px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #357ae8;
     }
+
     .error {
       color: red;
       margin-top: 10px;
       text-align: center;
     }
+
     .success {
       color: green;
       margin-top: 10px;
       text-align: center;
     }
+
     .link {
       text-align: center;
       margin-top: 10px;
     }
+
     .link button {
       background: none;
       border: none;
@@ -83,29 +96,53 @@
       padding: 0;
       margin: 5px;
     }
+
     /* Review Section Styles */
-    #review-section, #reviews-section {
+    #review-section,
+    #reviews-section {
       width: 100%;
     }
-    .qualities-list {
-      display: flex;
+
+    /* Button Group Styling */
+    .btn-group.flex-wrap {
+      gap: 10px;
+      /* Space between buttons */
       flex-wrap: wrap;
     }
-    .qualities-list label {
-      width: 45%;
-      margin-right: 5%;
-      margin-bottom: 5px;
+
+    /* Table Styling */
+    .attributes-table {
+      width: 100%;
+      border-collapse: collapse;
     }
+
+    .attributes-table td {
+      padding: 5px;
+    }
+
+    .attributes-table button {
+      width: 100%;
+    }
+
     /* Hidden Class */
     .hidden {
       display: none !important;
     }
+
     /* Responsive Design */
     @media (max-width: 600px) {
-      .qualities-list label {
-        width: 100%;
-        margin-right: 0;
+      .attributes-table td {
+        padding: 3px;
       }
+
+      .attributes-table button {
+        padding: 8px;
+        font-size: 14px;
+      }
+    }
+
+    .loginButtonClass{
+      border-radius: 10px;
     }
   </style>
   <!-- Firebase SDKs -->
@@ -119,40 +156,43 @@
   <script src="firebase-config.js"></script>
   <!-- App Logic -->
   <script src="app.js" defer></script>
+  <!-- Bootstrap CSS (for toggle buttons) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body>
   <!-- Authentication and Verification Section -->
   <div class="container" id="auth-section">
     <h1>Anonymous Review System</h1>
-    
+
     <!-- Login Form -->
     <div id="login-section">
       <h2>Login</h2>
       <form id="login-form">
         <label for="login-email">Email:</label>
         <input type="email" id="login-email" required placeholder="Enter your email">
-      
+
         <label for="login-password">Password:</label>
         <input type="password" id="login-password" required placeholder="Enter your password">
-      
-        <button type="submit">Login</button>
+        <br><br>
+        <button type="submit" class="loginButtonClass">Login</button>
       </form>
       <!-- Forgot Password and Sign Up Buttons -->
       <div class="link">
         <button id="forgot-password-button">Forgot Password?</button>
         <button id="signup-button">Sign Up</button>
       </div>
+      <p id="auth-error" class="error"></p>
     </div>
-    
-    
+
     <!-- Forgot Password Form (Initially Hidden) -->
     <div id="forgot-password-section" class="hidden">
       <h2>Reset Password</h2>
       <form id="forgot-password-form">
         <label for="forgot-email">Enter your email address:</label>
         <input type="email" id="forgot-email" required placeholder="Enter your registered email">
-        
-        <button type="submit">Send Password Reset Email</button>
+        <br><br>
+        <button type="submit" class="loginButtonClass">Send Password Reset Email</button>
       </form>
       <div class="link">
         <button id="back-to-login-button">Back to Login</button>
@@ -160,25 +200,26 @@
       <p id="forgot-password-error" class="error"></p>
       <p id="forgot-password-success" class="success"></p>
     </div>
-    
+
     <!-- Sign Up Form (Initially Hidden) -->
     <div id="signup-section" class="hidden">
       <h2>Sign Up</h2>
       <form id="signup-form">
         <label for="signup-email">Email:</label>
         <input type="email" id="signup-email" required placeholder="Enter your email">
-        
+
         <label for="signup-password">Password:</label>
         <input type="password" id="signup-password" required placeholder="Enter your password">
-        
-        <button type="submit">Sign Up</button>
+
+
+        <button type="submit" class="btn btn-primary mt-3">Sign Up</button>
       </form>
       <div class="link">
         <button id="back-to-login-from-signup">Back to Login</button>
       </div>
       <p id="signup-error" class="error"></p>
     </div>
-    
+
     <!-- Email Verification Notice (Initially Hidden) -->
     <div id="verify-email-section" class="hidden">
       <h2>Verify Your Email</h2>
@@ -191,10 +232,10 @@
       <button id="check-verification-button">I've Verified My Email</button>
     </div>
   </div>
-  
+
   <!-- Review Submission Section (Initially Hidden) -->
   <div class="container hidden" id="review-section">
-    <button class="btn btn-primary" id="profile-button" onclick="goToProfile()">Go to profile</button>
+    <button class="btn btn-primary mb-3" id="profile-button" onclick="goToProfile()">Go to Profile</button>
     <h2>Submit a Review</h2>
     <form id="review-form">
       <label for="reviewed-person">Select Person to Review:</label>
@@ -202,39 +243,152 @@
         <option value="">--Select--</option>
         <!-- Options will be populated dynamically -->
       </select>
-      
+
       <label>Qualities:</label>
-      <div class="qualities-list">
-        <label><input type="checkbox" name="qualities" value="Able"> Able</label>
-        <label><input type="checkbox" name="qualities" value="Adaptable"> Adaptable</label>
-        <label><input type="checkbox" name="qualities" value="Arrogant"> Arrogant</label>
-        <label><input type="checkbox" name="qualities" value="Brave"> Brave</label>
-        <label><input type="checkbox" name="qualities" value="Calm"> Calm</label>
-        <label><input type="checkbox" name="qualities" value="Caring"> Caring</label>
-        <label><input type="checkbox" name="qualities" value="Cheerful"> Cheerful</label>
-        <label><input type="checkbox" name="qualities" value="Confident"> Confident</label>
-        <label><input type="checkbox" name="qualities" value="Defensive"> Defensive</label>
-        <label><input type="checkbox" name="qualities" value="Dependable"> Dependable</label>
-        <label><input type="checkbox" name="qualities" value="Distrustful"> Distrustful</label>
-        <label><input type="checkbox" name="qualities" value="Energetic"> Energetic</label>
-        <label><input type="checkbox" name="qualities" value="Impatient"> Impatient</label>
-        <label><input type="checkbox" name="qualities" value="Insecure"> Insecure</label>
-        <label><input type="checkbox" name="qualities" value="Judgmental"> Judgmental</label>
-        <label><input type="checkbox" name="qualities" value="Logical"> Logical</label>
-        <label><input type="checkbox" name="qualities" value="Mature"> Mature</label>
-        <label><input type="checkbox" name="qualities" value="Moody"> Moody</label>
-        <label><input type="checkbox" name="qualities" value="Observant"> Observant</label>
-        <label><input type="checkbox" name="qualities" value="Organized"> Organized</label>
-        <label><input type="checkbox" name="qualities" value="Pessimistic"> Pessimistic</label>
-        <label><input type="checkbox" name="qualities" value="Rigid"> Rigid</label>
-        <label><input type="checkbox" name="qualities" value="Secretive"> Secretive</label>
-        <label><input type="checkbox" name="qualities" value="Self-centered"> Self-centered</label>
-        <label><input type="checkbox" name="qualities" value="Stubborn"> Stubborn</label>
-        <label><input type="checkbox" name="qualities" value="Supportive"> Supportive</label>
-        <label><input type="checkbox" name="qualities" value="Unapproachable"> Unapproachable</label>
-      </div>
-      
-      <button type="submit">Submit Review</button>
+      <!-- Table for Attribute Buttons -->
+      <table class="attributes-table">
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="Able">Able</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="accepting">accepting</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="adaptable">adaptable</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="bold">bold</button>
+          </td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="brave">brave</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="calm">calm</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="caring">caring</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="cheerful">cheerful</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="clever">clever</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="complex">complex</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="confident">confident</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="dependable">dependable</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="dignified">dignified</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="energetic">energetic</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="extroverted">extroverted</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="friendly">friendly</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="giving">giving</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="happy">happy</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="helpful">helpful</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="idealistic">idealistic</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="independent">independent</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="ingenious">ingenious</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="intelligent">intelligent</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="introverted">introverted</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="kind">kind</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="knowledgeable">knowledgeable</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="logical">logical</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="loving">loving</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="mature">mature</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="modest">modest</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="nervous">nervous</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="observant">observant</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="organised">organised</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="patient">patient</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="powerful">powerful</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="proud">proud</button>
+          </td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="quiet">quiet</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="reflective">reflective</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="relaxed">relaxed</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="religious">religious</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="responsive">responsive</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="searching">searching</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="self-assertive">self-assertive</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="self-conscious">self-conscious</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="sensible">sensible</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="sentimental">sentimental</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="shy">shy</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="silly">silly</button>
+          </td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="spontaneous">spontaneous</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="sympathetic">sympathetic</button></td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="tense">tense</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn"
+              data-attribute="trustworthy">trustworthy</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="warm">warm</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="wise">wise</button>
+          </td>
+          <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="witty">witty</button>
+          </td>
+          <td></td>
+        </tr>
+        <!-- Add more rows as needed -->
+      </table>
+
+      <button type="submit" class="btn btn-primary mt-3">Submit Review</button>
     </form>
     <div class="link">
       <button id="logout-button">Logout</button>
@@ -242,16 +396,10 @@
     <p id="review-success" class="success"></p>
     <p id="review-error" class="error"></p>
   </div>
-  
-  <!-- Reviews Display Section (Initially Hidden) -->
-  <div class="container hidden" id="reviews-section">
-    <h2>Your Reviews</h2>
-    <div id="reviews">
-      <!-- Reviews will be populated dynamically -->
-    </div>
-    <div class="link">
-      <button id="back-to-review-form-button">Back to Submit a Review</button>
-    </div>
-  </div>
+
+  <!-- Optional: Include Bootstrap JS Bundle for better functionality -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
+
 </html>

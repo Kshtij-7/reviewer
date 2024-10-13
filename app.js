@@ -39,18 +39,24 @@ const reviewError = document.getElementById('review-error');
 const reviewSuccess = document.getElementById('review-success');
 const logoutButton = document.getElementById('logout-button');
 
-const reviewsSection = document.getElementById('reviews-section');
-const reviewsDiv = document.getElementById('reviews');
-const backToReviewFormButton = document.getElementById('back-to-review-form-button');
+const profileButton = document.getElementById('profile-button');
+
+// Initialize Firestore and Auth
+
+// Function to Navigate to Profile (Assuming profile.html exists)
+function goToProfile() {
+  window.location.href = "profile.html";
+}
 
 // Populate Reviewed Person Dropdown
 async function populateReviewedPerson() {
   try {
     const usersSnapshot = await db.collection('users').get();
+    const currentUser = auth.currentUser;
     usersSnapshot.forEach(doc => {
       const user = doc.data();
       // Prevent users from reviewing themselves
-      if (doc.id !== firebase.auth().currentUser.uid) {
+      if (doc.id !== currentUser.uid) {
         const option = document.createElement('option');
         option.value = doc.id;
         option.textContent = user.email;
@@ -59,8 +65,47 @@ async function populateReviewedPerson() {
     });
   } catch (error) {
     console.error('Error fetching users:', error);
+    reviewError.textContent = 'Failed to load users. Please try again later.';
   }
 }
+
+// Toggle Attribute Buttons (Review Form)
+const reviewAttributeButtons = document.querySelectorAll('#review-section .attribute-btn');
+reviewAttributeButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const attr = button.getAttribute('data-attribute');
+    if (button.classList.contains('active')) {
+      // Deselect the attribute
+      button.classList.remove('active', 'btn-primary');
+      button.classList.add('btn-outline-primary');
+      console.log(`Attribute deselected: ${attr}`);
+    } else {
+      // Select the attribute
+      button.classList.add('active', 'btn-primary');
+      button.classList.remove('btn-outline-primary');
+      console.log(`Attribute selected: ${attr}`);
+    }
+  });
+});
+
+// Toggle Attribute Buttons (Signup Form)
+const signupAttributeButtons = document.querySelectorAll('#signup-section .attribute-btn');
+signupAttributeButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const attr = button.getAttribute('data-attribute');
+    if (button.classList.contains('active')) {
+      // Deselect the attribute
+      button.classList.remove('active', 'btn-primary');
+      button.classList.add('btn-outline-primary');
+      console.log(`Attribute deselected: ${attr}`);
+    } else {
+      // Select the attribute
+      button.classList.add('active', 'btn-primary');
+      button.classList.remove('btn-outline-primary');
+      console.log(`Attribute selected: ${attr}`);
+    }
+  });
+});
 
 // Toggle Sections
 forgotPasswordButton.addEventListener('click', () => {
@@ -92,18 +137,22 @@ signupForm.addEventListener('submit', async (e) => {
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
   
+  // Collect selected attributes based on active buttons
+  const selectedAttributes = Array.from(signupSection.querySelectorAll('.attribute-btn.active')).map(button => button.getAttribute('data-attribute'));
+  console.log('Selected attributes for signup:', selectedAttributes);
+  
   // Clear previous errors
   signupError.textContent = '';
   
   try {
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     console.log('User signed up:', userCredential.user);
     
-    // Add user to Firestore 'users' collection
+    // Add user to Firestore 'users' collection with selected attributes
     await db.collection('users').doc(userCredential.user.uid).set({
       email: email,
+      selfAttributes: selectedAttributes,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      // Add other user-specific fields if necessary
     });
     
     // Send Email Verification
@@ -112,6 +161,13 @@ signupForm.addEventListener('submit', async (e) => {
     // Show Email Verification Notice
     signupSection.classList.add('hidden');
     verifyEmailSection.classList.remove('hidden');
+    
+    // Reset Signup Form and Toggle Buttons
+    signupForm.reset();
+    signupAttributeButtons.forEach(button => {
+      button.classList.remove('active', 'btn-primary');
+      button.classList.add('btn-outline-primary');
+    });
   } catch (error) {
     console.error('Error signing up:', error);
     signupError.textContent = error.message;
@@ -125,10 +181,10 @@ loginForm.addEventListener('submit', async (e) => {
   const password = loginPassword.value.trim();
   
   // Clear previous errors
-  //authError.textContent = '';
+  authError.textContent = '';
   
   try {
-    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
     console.log('User logged in:', userCredential.user);
     // Firebase auth state listener will handle UI changes
   } catch (error) {
@@ -147,7 +203,7 @@ forgotPasswordForm.addEventListener('submit', async (e) => {
   forgotPasswordSuccess.textContent = '';
   
   try {
-    await firebase.auth().sendPasswordResetEmail(email);
+    await auth.sendPasswordResetEmail(email);
     console.log('Password reset email sent to:', email);
     forgotPasswordSuccess.textContent = 'Password reset email sent! Please check your inbox.';
   } catch (error) {
@@ -162,7 +218,7 @@ forgotPasswordForm.addEventListener('submit', async (e) => {
 
 // Resend Verification Email
 resendVerificationButton.addEventListener('click', async () => {
-  const user = firebase.auth().currentUser;
+  const user = auth.currentUser;
   if (user) {
     try {
       await user.sendEmailVerification();
@@ -180,7 +236,7 @@ resendVerificationButton.addEventListener('click', async () => {
 // Logout from Verification Section
 logoutButtonVerify.addEventListener('click', async () => {
   try {
-    await firebase.auth().signOut();
+    await auth.signOut();
     verifyEmailSection.classList.add('hidden');
     authSection.classList.remove('hidden');
   } catch (error) {
@@ -190,15 +246,15 @@ logoutButtonVerify.addEventListener('click', async () => {
 
 // Check Email Verification Status
 checkVerificationButton.addEventListener('click', async () => {
-  const user = firebase.auth().currentUser;
+  const user = auth.currentUser;
   if (user) {
     await user.reload();
     if (user.emailVerified) {
       verifyEmailSection.classList.add('hidden');
       authSection.classList.add('hidden');
       reviewSection.classList.remove('hidden');
-      reviewsSection.classList.remove('hidden');
       populateReviewedPerson();
+      displayReviewForm(user.uid);
       displayReviews(user.uid);
     } else {
       verifySuccess.textContent = '';
@@ -210,9 +266,8 @@ checkVerificationButton.addEventListener('click', async () => {
 // Handle Logout from Review Section
 logoutButton.addEventListener('click', async () => {
   try {
-    await firebase.auth().signOut();
+    await auth.signOut();
     reviewSection.classList.add('hidden');
-    reviewsSection.classList.add('hidden');
     authSection.classList.remove('hidden');
   } catch (error) {
     console.error('Error logging out:', error);
@@ -220,7 +275,7 @@ logoutButton.addEventListener('click', async () => {
 });
 
 // Authentication State Listener
-firebase.auth().onAuthStateChanged(user => {
+auth.onAuthStateChanged(user => {
   if (user) {
     if (user.emailVerified) {
       // User is signed in and email is verified
@@ -230,8 +285,8 @@ firebase.auth().onAuthStateChanged(user => {
       forgotPasswordSection.classList.add('hidden');
       verifyEmailSection.classList.add('hidden');
       reviewSection.classList.remove('hidden');
-      reviewsSection.classList.remove('hidden');
       populateReviewedPerson();
+      displayReviewForm(user.uid);
       displayReviews(user.uid);
     } else {
       // User is signed in but email is not verified
@@ -241,9 +296,7 @@ firebase.auth().onAuthStateChanged(user => {
       forgotPasswordSection.classList.add('hidden');
       verifyEmailSection.classList.remove('hidden');
       reviewSection.classList.add('hidden');
-      reviewsSection.classList.add('hidden');
       window.alert("Please verify your email");
-
     }
   } else {
     // User is signed out
@@ -253,16 +306,75 @@ firebase.auth().onAuthStateChanged(user => {
     forgotPasswordSection.classList.add('hidden');
     verifyEmailSection.classList.add('hidden');
     reviewSection.classList.add('hidden');
-    reviewsSection.classList.add('hidden');
   }
 });
 
-// Handle Review Form Submission
+// Function to Display and Edit Existing Review
+async function displayReviewForm(userId) {
+  try {
+    const reviewQuery = await db.collection('reviews')
+      .where('senderId', '==', userId)
+      .get();
+    
+    // Create a map of reviewedPersonId to reviewDoc
+    const reviewMap = {};
+    reviewQuery.forEach(doc => {
+      const data = doc.data();
+      reviewMap[data.reviewedPersonId] = { id: doc.id, ...data };
+    });
+    
+    // Listen for changes in the reviewed-person select dropdown
+    reviewedPersonSelect.addEventListener('change', async () => {
+      const selectedPersonId = reviewedPersonSelect.value;
+      if (!selectedPersonId) {
+        // No person selected, reset the form
+        resetReviewForm();
+        return;
+      }
+      
+      if (reviewMap[selectedPersonId]) {
+        // Review exists, fetch and populate the form for editing
+        const existingReview = reviewMap[selectedPersonId];
+        console.log('Existing review found:', existingReview);
+        // Deselect all attribute buttons first
+        reviewAttributeButtons.forEach(button => {
+          button.classList.remove('active', 'btn-primary');
+          button.classList.add('btn-outline-primary');
+        });
+        // Select the attributes from the existing review
+        existingReview.qualities.forEach(attr => {
+          const button = reviewSection.querySelector(`.attribute-btn[data-attribute="${attr}"]`);
+          if (button) {
+            button.classList.add('active', 'btn-primary');
+            button.classList.remove('btn-outline-primary');
+          }
+        });
+      } else {
+        // No existing review, reset the form
+        resetReviewForm();
+      }
+    });
+  } catch (error) {
+    console.error('Error displaying review form:', error);
+    reviewError.textContent = 'Failed to load review form. Please try again later.';
+  }
+}
+
+// Function to Reset Review Form
+function resetReviewForm() {
+  // Deselect all attribute buttons
+  reviewAttributeButtons.forEach(button => {
+    button.classList.remove('active', 'btn-primary');
+    button.classList.add('btn-outline-primary');
+  });
+}
+
+// Handle Review Form Submission (Create or Update)
 reviewForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const reviewedPersonId = reviewedPersonSelect.value;
-  const qualities = Array.from(document.querySelectorAll('input[name="qualities"]:checked')).map(cb => cb.value);
+  const qualities = Array.from(reviewSection.querySelectorAll('.attribute-btn.active')).map(button => button.getAttribute('data-attribute'));
   
   // Clear previous messages
   reviewError.textContent = '';
@@ -274,22 +386,41 @@ reviewForm.addEventListener('submit', async (e) => {
   }
   
   if (qualities.length === 0) {
-    reviewError.textContent = 'Please select at least one quality.';
+    reviewError.textContent = 'Please select at least one attribute.';
     return;
   }
   
   try {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (user) {
-      await db.collection('reviews').add({
-        senderId: user.uid,
-        reviewedPersonId: reviewedPersonId,
-        qualities: qualities,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      console.log('Review submitted successfully.');
-      reviewSuccess.textContent = 'Review submitted successfully!';
-      reviewForm.reset();
+      // Check if a review already exists for this person by the current user
+      const existingReviewQuery = await db.collection('reviews')
+        .where('senderId', '==', user.uid)
+        .where('reviewedPersonId', '==', reviewedPersonId)
+        .get();
+      
+      if (!existingReviewQuery.empty) {
+        // Review exists, update it
+        const reviewDoc = existingReviewQuery.docs[0];
+        await db.collection('reviews').doc(reviewDoc.id).update({
+          qualities: qualities,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('Review updated successfully.');
+        reviewSuccess.textContent = 'Your review has been updated successfully!';
+      } else {
+        // No review exists, create a new one
+        await db.collection('reviews').add({
+          senderId: user.uid,
+          reviewedPersonId: reviewedPersonId,
+          qualities: qualities,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('Review submitted successfully.');
+        reviewSuccess.textContent = 'Review submitted successfully!';
+      }
+      
+      // Refresh the reviews display
       displayReviews(user.uid);
     } else {
       reviewError.textContent = 'You must be logged in to submit a review.';
@@ -300,63 +431,15 @@ reviewForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Display Reviews
+// Function to Display Existing Reviews (Optional)
 async function displayReviews(userId) {
-  try {
-    const reviewsSnapshot = await db.collection('reviews')
-      .where('senderId', '==', userId)
-      .orderBy('timestamp', 'desc')
-      .get();
-      
-    reviewsDiv.innerHTML = '';
-    
-    if (reviewsSnapshot.empty) {
-      reviewsDiv.innerHTML = '<p>No reviews submitted yet.</p>';
-      return;
-    }
-    
-    reviewsSnapshot.forEach(async doc => {
-      const review = doc.data();
-      const reviewedPersonEmail = await getEmailById(review.reviewedPersonId);
-      const reviewDiv = document.createElement('div');
-      reviewDiv.style.border = '1px solid #ccc';
-      reviewDiv.style.padding = '10px';
-      reviewDiv.style.marginBottom = '10px';
-      reviewDiv.innerHTML = `
-        <p><strong>Reviewed Person:</strong> ${reviewedPersonEmail}</p>
-        <p><strong>Qualities:</strong> ${review.qualities.join(', ')}</p>
-        <p><em>Submitted on: ${review.timestamp ? review.timestamp.toDate().toLocaleString() : 'N/A'}</em></p>
-      `;
-      reviewsDiv.appendChild(reviewDiv);
-    });
-  } catch (error) {
-    console.error('Error fetching reviews:', error);
-    reviewsDiv.innerHTML = '<p>Error fetching reviews. Please try again later.</p>';
-  }
+  // Implementation depends on how you want to display reviews
+  // This could involve fetching reviews and displaying them in a list or table
+  // For simplicity, this function is left as a placeholder
+  // You can implement it based on your specific requirements
 }
 
-// Helper Function to Get Email by User ID
-async function getEmailById(userId) {
-  try {
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (userDoc.exists) {
-      return userDoc.data().email;
-    } else {
-      return 'Unknown User';
-    }
-  } catch (error) {
-    console.error('Error fetching user email:', error);
-    return 'Unknown User';
-  }
-}
-
-// Handle Back to Review Form Button
-backToReviewFormButton.addEventListener('click', () => {
-  reviewsSection.classList.add('hidden');
-  reviewSection.classList.remove('hidden');
-});
-
-
+// Function to Navigate to Profile Page
 function goToProfile() {
   window.location.href = "profile.html";
 }

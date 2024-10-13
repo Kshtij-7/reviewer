@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>User Profile - Anonymous Review System</title>
-  
+
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  
+
   <!-- Bootstrap Icons (Optional) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -17,184 +18,233 @@
       padding-top: 20px;
       padding-bottom: 20px;
     }
+
     .hidden {
       display: none;
     }
+
     .qualities-list label {
       width: 100%;
       margin-bottom: 5px;
     }
-    /* Venn Diagram and Attribute Lists Styling */
-    #venn-diagram {
+
+    /* Button Group Styling */
+    .btn-group.flex-wrap {
+      gap: 10px;
+      /* Space between buttons */
+      flex-wrap: wrap;
+    }
+
+    /* Table Styling */
+    .attributes-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .attributes-table td {
+      padding: 5px;
+    }
+
+    .attributes-table button {
+      width: 100%;
+    }
+    
+    /* Johari Window Styling */
+    #johari-window {
       width: 100%;
       height: 400px;
+      /* Initial height; will be adjusted dynamically */
       margin-top: 20px;
+      overflow: hidden;
     }
-    #attribute-lists {
-      margin-top: 30px;
-    }
-    #attribute-lists > div {
-      margin-bottom: 20px;
-    }
+
+    /* Removed: #attribute-lists styling */
     /* Responsive Design */
     @media (max-width: 650px) {
-      #venn-diagram {
+      #johari-window {
         height: 300px;
+        /* Adjust as needed */
       }
     }
   </style>
-  
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  
+
   <!-- D3.js for Venn Diagram -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  
+
   <!-- Venn Diagram Library -->
   <script src="https://unpkg.com/venn.js@0.2.20/build/venn.min.js"></script>
-  
+
   <!-- D3-tip Library -->
   <script src="https://unpkg.com/d3-tip@0.9.1/index.js"></script>
-  
+
   <!-- Firebase Configuration -->
   <script src="firebase-config.js"></script>
-  
+
   <!-- Profile Logic -->
   <script src="profile.js" defer></script>
 </head>
+
 <body>
-  
+
   <div class="container">
     <h1 class="text-center mb-4">User Profile</h1>
-    
+
     <!-- Profile Card -->
     <div id="profile-section" class="hidden">
+      <!-- Attributes Selection Card -->
       <div class="card mb-4">
         <div class="card-body">
           <h3 class="card-title">Select Attributes You Believe Others Associate with You</h3>
           <form id="self-attributes-form">
-            <div class="row">
-              <!-- Qualities Checkboxes -->
-              <div class="col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Able" id="able">
-                  <label class="form-check-label" for="able">Able</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Adaptable" id="adaptable">
-                  <label class="form-check-label" for="adaptable">Adaptable</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Arrogant" id="arrogant">
-                  <label class="form-check-label" for="arrogant">Arrogant</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Brave" id="brave">
-                  <label class="form-check-label" for="brave">Brave</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Calm" id="calm">
-                  <label class="form-check-label" for="calm">Calm</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Caring" id="caring">
-                  <label class="form-check-label" for="caring">Caring</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Cheerful" id="cheerful">
-                  <label class="form-check-label" for="cheerful">Cheerful</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Confident" id="confident">
-                  <label class="form-check-label" for="confident">Confident</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Defensive" id="defensive">
-                  <label class="form-check-label" for="defensive">Defensive</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Dependable" id="dependable">
-                  <label class="form-check-label" for="dependable">Dependable</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Distrustful" id="distrustful">
-                  <label class="form-check-label" for="distrustful">Distrustful</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Energetic" id="energetic">
-                  <label class="form-check-label" for="energetic">Energetic</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Impatient" id="impatient">
-                  <label class="form-check-label" for="impatient">Impatient</label>
-                </div>
-                <!-- Add more checkboxes as needed -->
-              </div>
-              <div class="col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Insecure" id="insecure">
-                  <label class="form-check-label" for="insecure">Insecure</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Judgmental" id="judgmental">
-                  <label class="form-check-label" for="judgmental">Judgmental</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Logical" id="logical">
-                  <label class="form-check-label" for="logical">Logical</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Mature" id="mature">
-                  <label class="form-check-label" for="mature">Mature</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Moody" id="moody">
-                  <label class="form-check-label" for="moody">Moody</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Observant" id="observant">
-                  <label class="form-check-label" for="observant">Observant</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Organized" id="organized">
-                  <label class="form-check-label" for="organized">Organized</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Pessimistic" id="pessimistic">
-                  <label class="form-check-label" for="pessimistic">Pessimistic</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Rigid" id="rigid">
-                  <label class="form-check-label" for="rigid">Rigid</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Secretive" id="secretive">
-                  <label class="form-check-label" for="secretive">Secretive</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Self-centered" id="self-centered">
-                  <label class="form-check-label" for="self-centered">Self-centered</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Stubborn" id="stubborn">
-                  <label class="form-check-label" for="stubborn">Stubborn</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Supportive" id="supportive">
-                  <label class="form-check-label" for="supportive">Supportive</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="self-qualities" value="Unapproachable" id="unapproachable">
-                  <label class="form-check-label" for="unapproachable">Unapproachable</label>
-                </div>
-                <!-- Add more checkboxes as needed -->
-              </div>
-            </div>
+            <table class="attributes-table">
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="Able">Able</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="accepting">accepting</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="adaptable">adaptable</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="bold">bold</button>
+                </td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="brave">brave</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="calm">calm</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="caring">caring</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="cheerful">cheerful</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="clever">clever</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="complex">complex</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="confident">confident</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="dependable">dependable</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="dignified">dignified</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="energetic">energetic</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="extroverted">extroverted</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="friendly">friendly</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="giving">giving</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="happy">happy</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="helpful">helpful</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="idealistic">idealistic</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="independent">independent</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="ingenious">ingenious</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="intelligent">intelligent</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="introverted">introverted</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="kind">kind</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="knowledgeable">knowledgeable</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="logical">logical</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="loving">loving</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="mature">mature</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="modest">modest</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="nervous">nervous</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="observant">observant</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="organised">organised</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="patient">patient</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="powerful">powerful</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="proud">proud</button>
+                </td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="quiet">quiet</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="reflective">reflective</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="relaxed">relaxed</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="religious">religious</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="responsive">responsive</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="searching">searching</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="self-assertive">self-assertive</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="self-conscious">self-conscious</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="sensible">sensible</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="sentimental">sentimental</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="shy">shy</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="silly">silly</button>
+                </td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="spontaneous">spontaneous</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="sympathetic">sympathetic</button></td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="tense">tense</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn"
+                    data-attribute="trustworthy">trustworthy</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="warm">warm</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="wise">wise</button>
+                </td>
+                <td><button type="button" class="btn btn-outline-primary attribute-btn" data-attribute="witty">witty</button>
+                </td>
+                <td></td>
+              </tr>
+              <!-- Add more rows as needed -->
+            </table>
             <button type="submit" class="btn btn-primary mt-3">Save Attributes</button>
           </form>
-          
+
           <!-- Feedback Messages -->
           <div id="self-attributes-feedback">
             <p id="self-attributes-error" class="text-danger"></p>
@@ -202,28 +252,27 @@
           </div>
         </div>
       </div>
-      
-      <!-- Venn Diagram Section -->
+
+
+      <!-- Johari Window Section -->
       <div class="card mb-4">
         <div class="card-body">
-          <h3 class="card-title">Your Self-Assessment vs. Others' Perceptions</h3>
-          <div id="venn-diagram"></div>
-          
-          <!-- Attribute Lists Below Venn Diagram -->
-          <div id="attribute-lists" class="row">
-            <!-- Attribute lists will be populated dynamically -->
-          </div>
+          <h3 class="card-title">Your Johari Window</h3>
+          <div id="johari-window"></div>
+
+
         </div>
       </div>
-      
+
       <!-- Navigation -->
       <div class="text-center">
         <a href="index.html" class="btn btn-secondary">Back to Home</a>
       </div>
     </div>
-    
+
     <!-- Bootstrap JS Bundle (Includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-  </body>
+
+</body>
+
 </html>
