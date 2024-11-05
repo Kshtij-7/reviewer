@@ -92,35 +92,72 @@ selfAttributesForm.addEventListener('submit', async (e) => {
 });
 
 // **Generate Johari Window with Group Filtering**
-async function generateJohariWindow(userId, groupId) {
-  try {
-    const userDoc = await db.collection('users').doc(userId).get();
-    const selfAttributes = userDoc.data()?.selfAttributes || [];
 
-    const reviewsSnapshot = await db.collection('reviews')
-      .where('reviewedPersonId', '==', userId)
-      .where('groupId', '==', groupId)
-      .get();
-
-    const othersAttributes = [];
-    reviewsSnapshot.forEach(doc => othersAttributes.push(...(doc.data().qualities || [])));
-    console.log('Others Attributes:', othersAttributes);
-
-    const openArea = selfAttributes.filter(attr => othersAttributes.includes(attr));
-    const blindArea = othersAttributes.filter(attr => !selfAttributes.includes(attr));
-    const hiddenArea = selfAttributes.filter(attr => !othersAttributes.includes(attr));
-
-    const allKnownAttributes = new Set([...selfAttributes, ...othersAttributes]);
-    const unknownArea = Array.from(allKnownAttributes).filter(
-      attr => !openArea.includes(attr) && !blindArea.includes(attr) && !hiddenArea.includes(attr)
-    );
-
-    renderJohariWindow(openArea, blindArea, hiddenArea, unknownArea);
-  } catch (error) {
-    console.error('Error generating Johari Window:', error);
-    johariWindowDiv.innerHTML = '<p class="text-danger">Failed to generate Johari Window.</p>';
-  }
-}
+    async function generateJohariWindow(userId, groupId) {
+      try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        const selfAttributes = userDoc.data()?.selfAttributes || [];
+    
+        const reviewsSnapshot = await db.collection('reviews')
+          .where('reviewedPersonId', '==', userId)
+          .where('groupId', '==', groupId)
+          .get();
+    
+        // Tally the count for each attribute from others' reviews
+        const attributeCountMap = {};
+        reviewsSnapshot.forEach(doc => {
+          const qualities = doc.data().qualities || [];
+          qualities.forEach(attr => {
+            attributeCountMap[attr] = (attributeCountMap[attr] || 0) + 1;
+          });
+        });
+        const othersAttributes = [];
+        reviewsSnapshot.forEach(doc => othersAttributes.push(...(doc.data().qualities || [])));
+        console.log('Others Attributes:', othersAttributes);
+    
+        // Convert othersAttributes into an array of attributes with counts
+        const othersAttributesWithCount = Object.entries(attributeCountMap).map(
+          ([attribute, count]) => ({ attribute, count })
+        );
+    
+        // Identify Open Area (selfAttributes that others have also selected)
+        const openArea = selfAttributes
+          .filter(attr => attributeCountMap[attr])
+          .map(attr => ({ attribute: attr, count: attributeCountMap[attr] }));
+    
+        // Identify Blind Area (attributes known by others but not by the user)
+        const blindArea = othersAttributesWithCount
+          .filter(({ attribute }) => !selfAttributes.includes(attribute));
+    
+        // Identify Hidden Area (attributes known by the user but not by others)
+        const hiddenArea = selfAttributes
+          .filter(attr => !attributeCountMap[attr])
+          .map(attr => ({ attribute: attr, count: 0 }));
+    
+        // Unknown Area (attributes not known by user or others)
+        const allKnownAttributes = new Set([
+          ...selfAttributes,
+          ...Object.keys(attributeCountMap)
+        ]);
+        const unknownArea = Array.from(allKnownAttributes).filter(
+          attr => !openArea.some(({ attribute }) => attribute === attr) &&
+                  !blindArea.some(({ attribute }) => attribute === attr) &&
+                  !hiddenArea.some(({ attribute }) => attribute === attr)
+        ).map(attr => ({ attribute: attr, count: 0 }));
+    
+        // Render the Johari Window with counts in the format "Attribute (Count)"
+        renderJohariWindow(
+          openArea.map(({ attribute, count }) => `${attribute} (${count})`),
+          blindArea.map(({ attribute, count }) => `${attribute} (${count})`),
+          hiddenArea.map(({ attribute}) => `${attribute}`),
+          unknownArea.map(({ attribute}) => `${attribute}`)
+        );
+      } catch (error) {
+        console.error('Error generating Johari Window:', error);
+        johariWindowDiv.innerHTML = '<p class="text-danger">Failed to generate Johari Window.</p>';
+      }
+    }
+    
 
 // **Render Johari Window**
 function renderJohariWindow(openArea, blindArea, hiddenArea, unknownArea) {
